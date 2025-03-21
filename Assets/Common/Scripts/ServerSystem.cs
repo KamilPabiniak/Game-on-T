@@ -16,6 +16,16 @@ public struct InitializedClient : IComponentData
     
 }
 
+public struct PlayerScore : IComponentData
+{
+    public int Value;
+}
+
+public struct GhostGroupElement : IBufferElementData
+{
+    public Entity Value;
+}
+
 [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
 public partial class ServerSystem : SystemBase
 {
@@ -28,38 +38,7 @@ public partial class ServerSystem : SystemBase
     {
         _clients.Update(this);
         var commandBuffer = new EntityCommandBuffer(Allocator.Temp);
-        foreach (var (request, command, entity) in SystemAPI.Query<RefRO<ReceiveRpcCommandRequest>, RefRO<ClientMessageRpcCommand>>().WithEntityAccess())
-        {
-            Debug.Log(command.ValueRO.message + " from client index " + request.ValueRO.SourceConnection.Index + " version " + request.ValueRO.SourceConnection.Version);
-            commandBuffer.DestroyEntity(entity);
-        }
-
-        foreach (var (request, command, entity) in SystemAPI.Query<RefRO<ReceiveRpcCommandRequest>, RefRO<SpawnBlockRpcCommand>>().WithEntityAccess())
-        {
-            if (SystemAPI.TryGetSingletonBuffer<PrefabElement>(out var prefabBuffer) && prefabBuffer.Length > 0)
-            {
-                var prefabEntity = prefabBuffer[Random.Range(0, prefabBuffer.Length)].Value;
-                Entity unit = commandBuffer.Instantiate(prefabEntity);
-                commandBuffer.SetComponent(unit, new LocalTransform()
-                {
-                    Position = new float3(Random.Range(-10f, 10f), 0, 0),
-                    Rotation = quaternion.identity,
-                    Scale = 1f
-                });
-
-                var networkId = _clients[request.ValueRO.SourceConnection]; 
-                commandBuffer.SetComponent(unit, new GhostOwner
-                {
-                    NetworkId = networkId.Value
-                });
-                
-                commandBuffer.AppendToBuffer(request.ValueRO.SourceConnection, new LinkedEntityGroup()
-                {
-                    Value = unit
-                });
-                commandBuffer.DestroyEntity(entity);
-            }
-        }
+    
         
         foreach (var (id, entity) in SystemAPI.Query<RefRO<NetworkId>>().WithNone<InitializedClient>().WithEntityAccess())
         {

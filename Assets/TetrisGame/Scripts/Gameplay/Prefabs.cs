@@ -1,34 +1,21 @@
-using System.Collections.Generic;
 using Unity.Entities;
 using UnityEngine;
 
-public class Prefabs : MonoBehaviour
+public class PrefabSingleton : MonoBehaviour
 {
-    public List<GameObject> blocks;
+    public GameObject block;
 }
 
-public struct PrefabElement : IBufferElementData
+public struct PrefabElement : IComponentData
 {
     public Entity Value;
 }
 
-public class PrefabsBaker : Baker<Prefabs>
+public class PrefabSingletonBaker : Baker<PrefabSingleton>
 {
-    public override void Bake(Prefabs authoring)
+    public override void Bake(PrefabSingleton authoring)
     {
         var entity = GetEntity(TransformUsageFlags.Dynamic);
-        var buffer = AddBuffer<PrefabElement>(entity);
-        
-        if (authoring.blocks != null)
-        {
-            for (int i = 0; i < authoring.blocks.Count; i++)
-            {
-                if (authoring.blocks[i] != null)
-                {
-                    var entityPref = GetEntity(authoring.blocks[i], TransformUsageFlags.Dynamic);
-                    buffer.Add(new PrefabElement { Value = entityPref });
-                }
-            }
-        }
+        AddComponent(entity, new PrefabElement { Value = GetEntity(authoring.block, TransformUsageFlags.Dynamic) });
     }
 }
