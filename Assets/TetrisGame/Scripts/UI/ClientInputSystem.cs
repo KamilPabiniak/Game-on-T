@@ -22,18 +22,15 @@ namespace GameLogic
 
             if (moveAmount == 0f)
                 return;
-
-            Entities
-                .WithAll<FallingTetromino>()
-                .WithoutBurst() 
-                .ForEach((ref LocalTransform transform) =>
+            
+            Entities.WithAll<FallingTetromino>().WithoutBurst().ForEach((ref LocalTransform transform) =>
+            {
+                float newX = transform.Position.x + moveAmount;
+                if (newX >= 0 && newX <= TetrisGrid.Width - 1)
                 {
-                    float newX = transform.Position.x + moveAmount;
-                    if (newX >= 0 && newX <= TetrisGrid.Width - 1)
-                    {
-                        transform.Position.x = newX;
-                    }
-                }).Run();
+                    transform.Position.x = newX;
+                }
+            }).Run();
         }
     }
 }

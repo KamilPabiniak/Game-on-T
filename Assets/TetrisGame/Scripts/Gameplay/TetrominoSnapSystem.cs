@@ -1,28 +1,28 @@
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Transforms;
 using UnityEngine;
 
 namespace GameLogic
 {
-    public partial class TetrominoSnapSystem : SystemBase
+     public partial class TetrominoSnapSystem : SystemBase
     {
         protected override void OnUpdate()
         {
-            var ecb = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
-            
+            var ecb = new EntityCommandBuffer(Allocator.Temp);
+
             Entities
                 .WithAll<FallingTetromino>()
                 .WithoutBurst()
-                .ForEach((Entity entity, ref LocalTransform transform, in DynamicBuffer<TetrominoBlock> blocks) =>
+                .ForEach((Entity entity, ref LocalTransform transform, in DynamicBuffer<TetrominoBlock> blockBuffer) =>
                 {
                     bool shouldSnap = false;
-                    for (int i = 0; i < blocks.Length; i++)
+                    for (int i = 0; i < blockBuffer.Length; i++)
                     {
-                        var block = blocks[i];
-                        int cellX = Mathf.RoundToInt(transform.Position.x + block.Offset.x);
-                        int cellY = Mathf.RoundToInt(transform.Position.y + block.Offset.y);
-                        int belowY = cellY - 1;
-                        if (belowY < 0 || TetrisGrid.IsCellOccupied(cellX, belowY))
+                        TetrominoBlock block = blockBuffer[i];
+                        int gridX = Mathf.RoundToInt(transform.Position.x + block.Offset.x);
+                        int gridY = Mathf.RoundToInt(transform.Position.y + block.Offset.y);
+                        if (gridY <= 0 || TetrisGrid.IsCellOccupied(gridX, gridY - 1))
                         {
                             shouldSnap = true;
                             break;
@@ -34,9 +34,9 @@ namespace GameLogic
                         transform.Position.x = Mathf.Round(transform.Position.x);
                         transform.Position.y = Mathf.Round(transform.Position.y);
                         
-                        for (int i = 0; i < blocks.Length; i++)
+                        for (int i = 0; i < blockBuffer.Length; i++)
                         {
-                            var block = blocks[i];
+                            TetrominoBlock block = blockBuffer[i];
                             int cellX = Mathf.RoundToInt(transform.Position.x + block.Offset.x);
                             int cellY = Mathf.RoundToInt(transform.Position.y + block.Offset.y);
                             TetrisGrid.MarkCell(cellX, cellY);
@@ -44,8 +44,7 @@ namespace GameLogic
                         
                         ecb.RemoveComponent<FallingTetromino>(entity);
                         ecb.AddComponent(entity, new TetrominoPlaced());
-
-                        Debug.Log("Snaped and set");
+                        Debug.Log($"Tetromino snapped and placed at grid position ({transform.Position.x}, {transform.Position.y})");
                     }
                 }).Run();
 

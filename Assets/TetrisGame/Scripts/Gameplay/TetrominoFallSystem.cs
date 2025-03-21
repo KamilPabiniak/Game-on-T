@@ -22,12 +22,10 @@ namespace GameLogic
         protected override void OnUpdate()
         {
             float deltaTime = SystemAPI.Time.DeltaTime;
-            Entities
-                .WithAll<FallingTetromino>()
-                .ForEach((ref LocalTransform transform, in FallSpeed fallSpeed) =>
-                {
-                    transform.Position.y -= fallSpeed.Value * deltaTime;
-                }).ScheduleParallel();
+            Entities.WithAll<FallingTetromino>().ForEach((ref LocalTransform transform, in FallSpeed fallSpeed) =>
+            {
+                transform.Position.y -= fallSpeed.Value * deltaTime;
+            }).ScheduleParallel();
         }
     }
 }
