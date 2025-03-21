@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1045 &1
+EditorBuildSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Scenes:
+  - enabled: 1
+    path: Assets/TetrisGame/Scenes/Game.unity
+    guid: 9fc0d4010bbf28b4594072e72b8655ab
+  - enabled: 1
+    path: Assets/TetrisGame/Scenes/Game/PlayScene.unity
+    guid: 4ce36164762dc2c43ba476727a1c59fb
+  - enabled: 1
+    path: Assets/TetrisGame/Scenes/UI.unity
+    guid: ccb916aa53936224cb6d111459ac8d89
+  m_configObjects:
+    com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 1d1452409ceb33249a210973f25e5fa1, type: 3}
+  m_UseUCBPForAssetBundles: 0
