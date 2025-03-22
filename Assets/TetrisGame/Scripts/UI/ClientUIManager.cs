@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace GameUI
+namespace GameLogic
 {
     /// <summary>
     /// Manages the Tetris UI: displays score, next tetromino, and player name.

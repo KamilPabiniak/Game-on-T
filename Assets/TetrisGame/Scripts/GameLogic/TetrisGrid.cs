@@ -1,7 +1,7 @@
 public static class TetrisGrid
 {
-    public static readonly int Width = 10;
-    public static readonly int Height = 20;
+    public static readonly int Width = 30;
+    public static readonly int Height = 24;
     private static readonly bool[,] Grid = new bool[Width, Height];
 
     public static bool IsCellOccupied(int x, int y)

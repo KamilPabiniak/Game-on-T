@@ -1,6 +1,5 @@
 using Unity.Entities;
 using Unity.Transforms;
-using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -10,27 +9,57 @@ namespace GameLogic
     {
         protected override void OnUpdate()
         {
-            float moveAmount = 0f;
+            float hostMove = 0f;
+            float clientMove = 0f;
             var keyboard = Keyboard.current;
             if (keyboard != null)
             {
+                // Sterowanie hosta – strzałki
                 if (keyboard.leftArrowKey.wasPressedThisFrame)
-                    moveAmount = -1f;
+                    hostMove = -1f;
                 else if (keyboard.rightArrowKey.wasPressedThisFrame)
-                    moveAmount = 1f;
+                    hostMove = 1f;
+                
+                // Sterowanie klienta – A/D
+                if (keyboard.aKey.wasPressedThisFrame)
+                    clientMove = -1f;
+                else if (keyboard.dKey.wasPressedThisFrame)
+                    clientMove = 1f;
             }
-
-            if (moveAmount == 0f)
-                return;
             
-            Entities.WithAll<FallingTetromino>().WithoutBurst().ForEach((ref LocalTransform transform) =>
+            if (hostMove != 0f)
             {
-                float newX = transform.Position.x + moveAmount;
-                if (newX >= 0 && newX <= TetrisGrid.Width - 1)
-                {
-                    transform.Position.x = newX;
-                }
-            }).Run();
+                // Aktualizujemy tylko obiekty dla hosta (PlayerId == 0)
+                Entities
+                    .WithAll<FallingTetromino>()
+                    .WithoutBurst()
+                    .ForEach((ref LocalTransform transform, in PlayerControl control) =>
+                    {
+                        if (control.PlayerId == 0)
+                        {
+                            float newX = transform.Position.x + hostMove;
+                            if (newX >= 0 && newX <= TetrisGrid.Width - 1)
+                                transform.Position.x = newX;
+                        }
+                    }).Run();
+            }
+            
+            if (clientMove != 0f)
+            {
+                // Aktualizujemy tylko obiekty dla klienta (PlayerId == 1)
+                Entities
+                    .WithAll<FallingTetromino>()
+                    .WithoutBurst()
+                    .ForEach((ref LocalTransform transform, in PlayerControl control) =>
+                    {
+                        if (control.PlayerId == 1)
+                        {
+                            float newX = transform.Position.x + clientMove;
+                            if (newX >= 0 && newX <= TetrisGrid.Width - 1)
+                                transform.Position.x = newX;
+                        }
+                    }).Run();
+            }
         }
     }
 }
