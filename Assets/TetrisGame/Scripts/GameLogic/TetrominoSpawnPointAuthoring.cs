@@ -4,6 +4,7 @@ using Unity.Mathematics;
 
 namespace GameLogic
 {
+    // Ten skrypt jest bez sensu, spawn powinien być randopmowy między punktami dla gracza host i dla klientów
     public class TetrominoSpawnPointAuthoring : MonoBehaviour
     {
         [Tooltip("0 – host, 1 – client")]
