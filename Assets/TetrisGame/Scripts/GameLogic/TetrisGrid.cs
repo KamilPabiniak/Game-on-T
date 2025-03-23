@@ -1,19 +1,53 @@
-public static class TetrisGrid
-{
-    public static readonly int Width = 30;
-    public static readonly int Height = 24;
-    private static readonly bool[,] Grid = new bool[Width, Height];
+using Unity.Burst;
+using Unity.Collections;
 
-    public static bool IsCellOccupied(int x, int y)
+[BurstCompile]
+public struct TetrisGrid
+{
+    public const int Width = 30;
+    public const int Height = 30;
+
+    private NativeArray<bool> _grid;
+
+    public TetrisGrid(Allocator allocator)
     {
-        if (x < 0 || x >= Width || y < 0 || y >= Height)
-            return true; 
-        return Grid[x, y];
+        _grid = new NativeArray<bool>(Width * Height, allocator);
     }
 
-    public static void MarkCell(int x, int y)
+    [BurstCompile]
+    public void Dispose()
+    {
+        if (_grid.IsCreated)
+        {
+            _grid.Dispose();
+        }
+    }
+
+    [BurstCompile]
+    public bool IsCellOccupied(int x, int y)
+    {
+        if (x < 0 || x >= Width || y < 0 || y >= Height)
+        {
+            return true;
+        }
+        return _grid[y * Width + x];
+    }
+
+    [BurstCompile]
+    public void MarkCell(int x, int y)
     {
         if (x >= 0 && x < Width && y >= 0 && y < Height)
-            Grid[x, y] = true;
+        {
+            _grid[y * Width + x] = true;
+        }
+    }
+
+    [BurstCompile]
+    public void ClearCell(int x, int y)
+    {
+        if (x >= 0 && x < Width && y >= 0 && y < Height)
+        {
+            _grid[y * Width + x] = false;
+        }
     }
 }

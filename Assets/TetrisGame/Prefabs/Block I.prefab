@@ -122,7 +122,7 @@ MonoBehaviour:
   HasOwner: 1
   SupportAutoCommandTarget: 1
   TrackInterpolationDelay: 0
-  GhostGroup: 1
+  GhostGroup: 0
   UsePreSerialization: 0
   RollbackPredictedSpawnedGhostState: 0
   RollbackPredictionOnStructuralChanges: 1

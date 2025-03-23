@@ -8,29 +8,31 @@ public class TetrominoGizmoDrawer : MonoBehaviour
     private void OnDrawGizmos()
     {
         if (!Application.isPlaying) return;
-        
+
         var world = World.DefaultGameObjectInjectionWorld;
-        if (world == null) return;
-        
+        if (world == null || !world.IsCreated) return;
+
         var entityManager = world.EntityManager;
-        var query = entityManager.CreateEntityQuery(typeof(LocalTransform), typeof(GameLogic.TetrominoBlock));
+        var query = entityManager.CreateEntityQuery(typeof(LocalTransform), typeof(GameLogic.TetrominoOffset));
         var entities = query.ToEntityArray(Unity.Collections.Allocator.Temp);
-        
+
         foreach (var entity in entities)
         {
             var localTransform = entityManager.GetComponentData<LocalTransform>(entity);
-            var buffer = entityManager.GetBuffer<GameLogic.TetrominoBlock>(entity);
-            
+            var buffer = entityManager.GetBuffer<GameLogic.TetrominoOffset>(entity);
+
             foreach (var block in buffer)
             {
                 Vector3 blockPos = new Vector3(
-                    localTransform.Position.x + block.Offset.x,
-                    localTransform.Position.y + block.Offset.y,
+                    localTransform.Position.x + block.Value.x,
+                    localTransform.Position.y + block.Value.y,
                     localTransform.Position.z);
+
                 Gizmos.color = Color.green;
                 Gizmos.DrawCube(blockPos, Vector3.one * 0.95f);
             }
         }
+
         entities.Dispose();
     }
 }

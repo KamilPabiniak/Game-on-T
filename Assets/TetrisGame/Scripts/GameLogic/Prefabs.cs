@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class PrefabSingleton : MonoBehaviour
 {
-    public GameObject block;
+    public GameObject block; 
 }
 
 public struct PrefabElement : IComponentData
