@@ -119,13 +119,13 @@ MonoBehaviour:
   OptimizationMode: 0
   Importance: 1
   prefabId: 013f3ded22b108a49ab2de1071aae48f
-  HasOwner: 1
+  HasOwner: 0
   SupportAutoCommandTarget: 1
-  TrackInterpolationDelay: 0
+  TrackInterpolationDelay: 1
   GhostGroup: 0
   UsePreSerialization: 0
   RollbackPredictedSpawnedGhostState: 0
-  RollbackPredictionOnStructuralChanges: 1
+  RollbackPredictionOnStructuralChanges: 0
 --- !u!114 &730202795070492781
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -139,7 +139,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_MotionType: 1
-  m_Smoothing: 0
+  m_Smoothing: 1
   m_Mass: 1
   m_LinearDamping: 0.01
   m_AngularDamping: 0.05

@@ -1,11 +1,13 @@
 using Unity.Burst;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.NetCode;
 using Unity.Transforms;
 using UnityEngine;
 
 namespace GameLogic
 {
+    [GhostComponent(PrefabType = GhostPrefabType.All)]
     public struct FallingTetromino : IComponentData { }
 
     public struct FallSpeed : IComponentData

@@ -1,150 +1,85 @@
 using Unity.Burst;
-using Unity.Collections;
 using Unity.Entities;
+using Unity.Collections;
+using Unity.NetCode;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
 namespace GameLogic
 {
-    // Komponenty używane przez system
-    public struct TetrominoContainer : IComponentData { }
-    public struct TetrominoBlock : IBufferElementData { public int2 Offset; }
-    public struct TetrominoBlockLink : IComponentData { public Entity Container; public int BlockIndex; }
-    public struct PlayerControl : IComponentData { public int PlayerId; }
-
     [BurstCompile]
     [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
-    public partial class TetrominoSpawnAndFollowSystem : SystemBase
+    public partial struct TetrominoSpawnerSystem : ISystem
     {
-        public float SpawnInterval = 3f;
-        private float _timeSinceLastSpawn;
+        private EntityQuery _spawnPointsQuery;
+        private EntityQuery _playersQuery;
 
-        protected override void OnCreate()
+        [BurstCompile]
+        public void OnCreate(ref SystemState state)
         {
-            RequireForUpdate<PrefabElement>();
+            state.RequireForUpdate<PrefabElement>();
+            _spawnPointsQuery = new EntityQueryBuilder(Allocator.Temp)
+                .WithAll<TetrominoSpawnPoint>()
+                .Build(ref state);
+            _playersQuery = new EntityQueryBuilder(Allocator.Temp)
+                .WithAll<NetworkId>()
+                .WithNone<Tetromino>()
+                .Build(ref state);
         }
 
-        protected override void OnUpdate()
+        [BurstCompile]
+        public void OnUpdate(ref SystemState state)
         {
-            float deltaTime = SystemAPI.Time.DeltaTime;
-            _timeSinceLastSpawn += deltaTime;
+            var prefab = SystemAPI.GetSingleton<PrefabElement>().Value;
+            var spawnPoints = _spawnPointsQuery.ToComponentDataArray<TetrominoSpawnPoint>(Allocator.Temp);
+            var ecb = new EntityCommandBuffer(Allocator.Temp);
 
-            // Pobieramy wszystkie spawn pointy z sceny
-            EntityQuery spawnPointQuery = GetEntityQuery(ComponentType.ReadOnly<TetrominoSpawnPoint>());
-            NativeArray<TetrominoSpawnPoint> spawnPoints = spawnPointQuery.ToComponentDataArray<TetrominoSpawnPoint>(Allocator.TempJob);
-
-            if (spawnPoints.Length == 0)
+            foreach (var (idEntity, netId) in SystemAPI.Query<Entity, NetworkId>())
             {
-                Debug.LogWarning("Nie znaleziono spawn pointów w scenie!");
-                spawnPoints.Dispose();
-                return;
+                if (spawnPoints.Length < 2)
+                {
+                    Debug.LogError("Not enough spawn points!");
+                    continue;
+                }
+
+                var spawnIndex = netId.Value % 2;
+                var spawnPos = spawnPoints[spawnIndex].Position;
+
+                // Spawn new tetromino
+                var tetromino = ecb.Instantiate(prefab);
+                ecb.AddComponent(tetromino, new Tetromino
+                {
+                    PlayerId = netId.Value,
+                    RotationPivot = float3.zero,
+                    Color = (netId.Value == 0) ? 
+                        new float4(0, 0, 1, 1) : // Blue for host
+                        new float4(1, 0, 0, 1)   // Red for client
+                });
+                
+                // Add ghost and network components
+                ecb.AddComponent(tetromino, new GhostOwner { NetworkId = netId.Value });
+                ecb.AddComponent(tetromino, new LocalTransform
+                {
+                    Position = spawnPos,
+                    Rotation = quaternion.identity,
+                    Scale = 1f
+                });
+
+                // Add block offsets for I shape (przykładowy kształt)
+                var buffer = ecb.AddBuffer<TetrominoOffset>(tetromino);
+                buffer.Add(new TetrominoOffset { Value = new float2(-1, 0) });
+                buffer.Add(new TetrominoOffset { Value = new float2(0, 0) });
+                buffer.Add(new TetrominoOffset { Value = new float2(1, 0) });
+                buffer.Add(new TetrominoOffset { Value = new float2(2, 0) });
+
+                // Assign to player
+                ecb.AddComponent(idEntity, new Tetromino { PlayerId = netId.Value });
             }
 
-            // Sprawdzamy, czy nie leci już jakaś figura
-            EntityQuery fallingQuery = GetEntityQuery(ComponentType.ReadOnly<FallingTetromino>());
-            if (_timeSinceLastSpawn >= SpawnInterval && fallingQuery.CalculateEntityCount() == 0)
-            {
-                _timeSinceLastSpawn = 0f;
-                var entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
-
-                // Pobieramy prefabrykat z singletonu
-                if (SystemAPI.TryGetSingleton<PrefabElement>(out var prefabElement))
-                {
-                    Debug.Log($"PrefabElement singleton found: {prefabElement.Value}");
-                    using (var ecb = new EntityCommandBuffer(Allocator.Temp))
-                    {
-                        // Zakładamy, że mamy dwóch graczy (możesz to zmodyfikować według potrzeb)
-                        for (int playerId = 0; playerId < 2; playerId++)
-                        {
-                            // Dla testów wybieramy losowo dowolny spawn point
-                            int randomIndex = UnityEngine.Random.Range(0, spawnPoints.Length);
-                            float3 spawnPosition = spawnPoints[randomIndex].Position;
-
-                            // Tworzymy kontener tetromino
-                            Entity container = ecb.CreateEntity();
-                            ecb.AddComponent(container, new TetrominoContainer());
-                            ecb.AddComponent(container, new FallingTetromino());
-                            ecb.AddComponent(container, new FallSpeed { Value = 2f });
-                            ecb.AddComponent(container, new PlayerControl { PlayerId = playerId });
-                            ecb.AddComponent(container, new LocalTransform
-                            {
-                                Position = spawnPosition,
-                                Rotation = quaternion.identity,
-                                Scale = 1f
-                            });
-                            ecb.AddComponent(container, new LocalToWorld());
-
-                            // Dodajemy bufor offsetów – tworzymy kwadrat z offsetami: (0,0), (1,0), (0,1), (1,1)
-                            DynamicBuffer<TetrominoBlock> blockBuffer = ecb.AddBuffer<TetrominoBlock>(container);
-                            NativeList<int2> offsets = new NativeList<int2>(Allocator.Temp);
-                            offsets.Add(new int2(0, 0));
-                            offsets.Add(new int2(1, 0));
-                            offsets.Add(new int2(0, 1));
-                            offsets.Add(new int2(1, 1));
-
-                            // Dla każdego offsetu zapisujemy do bufora i tworzymy wizualny blok
-                            for (int i = 0; i < offsets.Length; i++)
-                            {
-                                int2 offset = offsets[i];
-                                blockBuffer.Add(new TetrominoBlock { Offset = offset });
-                                Entity blockEntity = ecb.Instantiate(prefabElement.Value);
-                                ecb.AddComponent(blockEntity, new TetrominoBlockLink { Container = container, BlockIndex = i });
-                                ecb.AddComponent(blockEntity, new PlayerControl { PlayerId = playerId });
-                                ecb.SetComponent(blockEntity, new LocalTransform
-                                {
-                                    Position = spawnPosition + new float3(offset.x, offset.y, 0f),
-                                    Rotation = quaternion.identity,
-                                    Scale = 1f
-                                });
-                            }
-                            offsets.Dispose();
-                            Debug.Log($"Tetromino spawned for player {playerId} at {spawnPosition}");
-                        }
-                        ecb.Playback(entityManager);
-                    }
-                }
-                else
-                {
-                    Debug.LogWarning("PrefabElement singleton not found!");
-                }
-            }
-
+            ecb.Playback(state.EntityManager);
+            ecb.Dispose();
             spawnPoints.Dispose();
-
-            // Aktualizacja pozycji wizualnych bloków względem kontenera
-            var containerTransformsLookup = GetComponentLookup<LocalTransform>(true);
-            var containerBlockBuffers = GetBufferLookup<TetrominoBlock>(true);
-            NativeParallelHashMap<Entity, LocalTransform> parentTransformMap =
-                new NativeParallelHashMap<Entity, LocalTransform>(100, Allocator.TempJob);
-
-            Entities
-                .WithReadOnly(containerTransformsLookup)
-                .WithAll<TetrominoContainer>()
-                .ForEach((Entity entity) =>
-                {
-                    parentTransformMap.TryAdd(entity, containerTransformsLookup[entity]);
-                }).Run();
-
-            Dependency = Entities
-                .WithReadOnly(parentTransformMap)
-                .WithReadOnly(containerBlockBuffers)
-                .WithBurst()
-                .ForEach((ref LocalTransform blockLocalTransform, in TetrominoBlockLink link) =>
-                {
-                    if (parentTransformMap.TryGetValue(link.Container, out LocalTransform parentTransform))
-                    {
-                        DynamicBuffer<TetrominoBlock> blockBuffer = containerBlockBuffers[link.Container];
-                        if (link.BlockIndex >= 0 && link.BlockIndex < blockBuffer.Length)
-                        {
-                            int2 offset = blockBuffer[link.BlockIndex].Offset;
-                            blockLocalTransform.Position = parentTransform.Position + new float3(offset.x, offset.y, 0f);
-                        }
-                    }
-                }).ScheduleParallel(Dependency);
-
-            Dependency.Complete();
-            parentTransformMap.Dispose();
         }
     }
 }

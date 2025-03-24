@@ -57,7 +57,6 @@ namespace GameLogic
                             grid.MarkCell(gridX, gridY);
                         }
                         ecb.RemoveComponent<Tetromino>(entity);
-                        ecb.RemoveComponent<PlayerControl>(entity);
                         Debug.Log("Tetromino snapped to grid");
                     }
                 }).Run();
