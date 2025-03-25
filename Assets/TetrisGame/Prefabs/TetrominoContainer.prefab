@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8079138996643091495}
   - component: {fileID: 2396404985160483305}
+  - component: {fileID: -1835873723016016659}
   m_Layer: 0
   m_Name: TetrominoContainer
   m_TagString: Untagged
@@ -45,3 +46,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   blockPrefab: {fileID: 6169634878360046007, guid: 013f3ded22b108a49ab2de1071aae48f, type: 3}
+--- !u!114 &-1835873723016016659
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4457334391118004539}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 114ed4e361a28d54ead1aa597ae5b32d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  blueMoveLeftKey: 61
+  blueMoveRightKey: 62
+  blueFastFallKey: 64
+  blueRotateKey: 37
+  redMoveLeftKey: 15
+  redMoveRightKey: 18
+  redFastFallKey: 33
+  redRotateKey: 63

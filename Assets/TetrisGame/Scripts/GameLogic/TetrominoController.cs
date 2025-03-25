@@ -1,9 +1,8 @@
 using System.Collections.Generic;
-using TetrisGame.Scripts.GameLogic;
+using TetrisGame.Scripts.UI;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
-namespace TetrisGame.Scripts.UI
+namespace TetrisGame.Scripts.GameLogic
 {
     [RequireComponent(typeof(Rigidbody))]
     public class TetrominoController : MonoBehaviour
@@ -15,23 +14,11 @@ namespace TetrisGame.Scripts.UI
         public float fallSpeed = 3f;
         public bool isPlaced;
 
-        // Input keys for movement
-        public Key blueMoveLeftKey = Key.LeftArrow;
-        public Key blueMoveRightKey = Key.RightArrow;
-        public Key blueFastFallKey = Key.DownArrow;
-
-        public Key redMoveLeftKey = Key.A;
-        public Key redMoveRightKey = Key.D;
-        public Key redFastFallKey = Key.S;
-
-        [Header("Rotation Keys (Opposing Player)")]
-        public Key blueRotateKey = Key.W;
-        public Key redRotateKey = Key.UpArrow;
-
         public PlayerColor owner = PlayerColor.Blue;
 
         private Rigidbody _rigidbody;
         private Vector3 _movement;
+        private TetrominoInputHandler _inputHandler;
 
         private void Awake()
         {
@@ -41,11 +28,10 @@ namespace TetrisGame.Scripts.UI
             _rigidbody.constraints = RigidbodyConstraints.FreezeRotationX |
                                      RigidbodyConstraints.FreezeRotationY |
                                      RigidbodyConstraints.FreezeRotationZ;
+            
+            _inputHandler = GetComponent<TetrominoInputHandler>();
         }
-
-        /// <summary>
-        ///  Set tetromino color there
-        /// </summary>
+        
         public void Initialize()
         {
             SetTetrominoColor();
@@ -53,7 +39,10 @@ namespace TetrisGame.Scripts.UI
 
         private void Update()
         {
-            HandleInput();
+            _movement = _inputHandler != null 
+                ? _inputHandler.GetMovement(owner, horizontalSpeed, fallSpeed) 
+                : Vector3.zero;
+            
             HandleRotation();
         }
         
@@ -66,8 +55,7 @@ namespace TetrisGame.Scripts.UI
         {
             if (isPlaced)
                 return;
-
-            // Check if any block has reached the bottom of the board
+            
             foreach (Transform block in transform)
             {
                 if (Mathf.RoundToInt(block.position.y) <= 0)
@@ -77,8 +65,7 @@ namespace TetrisGame.Scripts.UI
                     return;
                 }
             }
-
-            // If moving down is not possible, move tetromino downward step-by-step
+            
             if (!CanMove(Vector3.down * (fallSpeed * Time.fixedDeltaTime)))
             {
                 while (CanMove(Vector3.down))
@@ -93,62 +80,24 @@ namespace TetrisGame.Scripts.UI
             _rigidbody.MovePosition(_rigidbody.position + _movement * Time.fixedDeltaTime);
         }
         
-        /// <summary>
-        /// Snaps (attaches) all tetromino blocks to the nearest grid cell centers
-        /// </summary>
         public void SnapBlocksToGrid()
         {
             foreach (Transform block in transform)
             {
-                var position = block.position;
+                Vector3 position = block.position;
                 int gridX = Mathf.RoundToInt(position.x);
                 int gridY = Mathf.RoundToInt(position.y);
-                position = new Vector3(gridX, gridY , position.z);
-                block.position = position;
+                block.position = new Vector3(gridX, gridY, position.z);
             }
         }
         
-        private void HandleInput()
-        {
-            Vector3 movement = Vector3.zero;
-
-            if (owner == PlayerColor.Blue)
-            {
-                if (Keyboard.current[blueMoveLeftKey].isPressed)
-                    movement.x = -horizontalSpeed;
-                if (Keyboard.current[blueMoveRightKey].isPressed)
-                    movement.x = horizontalSpeed;
-                movement.y = Keyboard.current[blueFastFallKey].isPressed ? -fallSpeed * 2.5f : -fallSpeed;
-            }
-            else // Owner Red
-            {
-                if (Keyboard.current[redMoveLeftKey].isPressed)
-                    movement.x = -horizontalSpeed;
-                if (Keyboard.current[redMoveRightKey].isPressed)
-                    movement.x = horizontalSpeed;
-                movement.y = Keyboard.current[redFastFallKey].isPressed ? -fallSpeed * 2.5f : -fallSpeed;
-            }
-
-            _movement = movement;
-        }
-
- 
         private void HandleRotation()
         {
-            bool rotatePressed = false;
-            if (owner == PlayerColor.Blue && Keyboard.current[blueRotateKey].wasPressedThisFrame)
-            {
-                rotatePressed = true;
-            }
-            else if (owner == PlayerColor.Red && Keyboard.current[redRotateKey].wasPressedThisFrame)
-            {
-                rotatePressed = true;
-            }
+            bool rotatePressed = _inputHandler != null && _inputHandler.IsRotatePressed(owner);
 
             if (!rotatePressed)
                 return;
 
-            // Calculate new local positions after 90° rotation about Z-axis: newLocal = (y, -x, z)
             List<Vector3> newLocalPositions = new List<Vector3>();
             foreach (Transform block in transform)
             {
@@ -157,7 +106,6 @@ namespace TetrisGame.Scripts.UI
                 newLocalPositions.Add(newLocal);
             }
 
-            // Validate that all new positions are within board boundaries and not occupied
             bool canRotate = true;
             for (int i = 0; i < transform.childCount; i++)
             {
@@ -188,10 +136,7 @@ namespace TetrisGame.Scripts.UI
                 }
             }
         }
-
-        /// <summary>
-        /// Checks if the tetromino can move in the given direction
-        /// </summary>
+        
         private bool CanMove(Vector3 direction)
         {
             foreach (Transform block in transform)
@@ -207,20 +152,13 @@ namespace TetrisGame.Scripts.UI
             return true;
         }
 
-        /// <summary>
-        /// Finalizes the tetromino placement: snaps blocks to the grid, detaches them from the container,
-        /// sets their layer to "Snaped", informs the GameManager and destroys the container. Wow
-        /// </summary>
         public void PlaceTetromino()
         {
             isPlaced = true;
             BoardManager.Instance.PlaceTetromino(gameObject);
             GameManager.Instance.OnTetrominoPlaced(owner);
         }
-
-        /// <summary>
-        /// Sets color lol
-        /// </summary>
+        
         private void SetTetrominoColor()
         {
             Color color = owner == PlayerColor.Blue ? Color.blue : Color.red;
