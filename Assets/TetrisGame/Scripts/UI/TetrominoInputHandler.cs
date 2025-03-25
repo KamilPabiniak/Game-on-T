@@ -11,16 +11,16 @@ namespace TetrisGame.Scripts.UI
     public class TetrominoInputHandler : MonoBehaviour
     {
         [Header("Blue Player Keys")]
-        public Key blueMoveLeftKey = Key.LeftArrow;
-        public Key blueMoveRightKey = Key.RightArrow;
-        public Key blueFastFallKey = Key.DownArrow;
-        public Key blueRotateKey = Key.W;
+        public Key blueMoveLeftKey = Key.A;
+        public Key blueMoveRightKey = Key.D;
+        public Key blueFastFallKey = Key.S;
+        public Key blueRotateKey = Key.UpArrow;
 
         [Header("Red Player Keys")]
-        public Key redMoveLeftKey = Key.A;
-        public Key redMoveRightKey = Key.D;
-        public Key redFastFallKey = Key.S;
-        public Key redRotateKey = Key.UpArrow;
+        public Key redMoveLeftKey = Key.LeftArrow;
+        public Key redMoveRightKey = Key.RightArrow;
+        public Key redFastFallKey = Key.DownArrow;
+        public Key redRotateKey = Key.W;
         
         public Vector3 GetMovement(PlayerColor owner, float horizontalSpeed, float fallSpeed)
         {

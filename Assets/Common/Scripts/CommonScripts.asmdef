@@ -1,11 +1,7 @@
 {
-    "name": "UI",
+    "name": "CommonScripts",
     "rootNamespace": "",
-    "references": [
-        "GUID:6055be8ebefd69e48b49212b09b47b2f",
-        "GUID:75469ad4d38634e559750d17036d5f7c",
-        "GUID:b0717cbc77b10fb42b68eb900971a4c0"
-    ],
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

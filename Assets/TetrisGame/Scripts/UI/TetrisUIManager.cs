@@ -1,3 +1,4 @@
+using Common.Scripts;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -16,6 +17,8 @@ namespace TetrisGame.Scripts.UI
         [SerializeField] private TextMeshProUGUI scoreText;
         [SerializeField] private TextMeshProUGUI bluePlayerNameText;
         [SerializeField] private TextMeshProUGUI redPlayerNameText;
+        [SerializeField] private GameObject gameOverScreen;
+        
 
         [Header("UI Elements - Next Tetromino Preview")]
         [Tooltip("3x3 grid of Image elements for Blue player's next tetromino preview (ordered row-major)")]
@@ -38,8 +41,25 @@ namespace TetrisGame.Scripts.UI
             {
                 Destroy(gameObject);
             }
+
+            UpdateScore(0);
         }
-        
+
+        private void OnEnable()
+        {
+            GameEvent.OnGameOver += ShowGameOver;
+        }
+
+        private void OnDisable()
+        {
+            GameEvent.OnGameOver -= ShowGameOver;
+        }
+
+        private void ShowGameOver()
+        {
+            gameOverScreen.SetActive(true);
+        }
+
         public void UpdateScore(int score)
         {
             if (scoreText != null)
@@ -104,8 +124,7 @@ namespace TetrisGame.Scripts.UI
             int gridSize = 3;
             int offsetX = (gridSize - shapeWidth) / 2 - Mathf.RoundToInt(minX);
             int offsetY = (gridSize - shapeHeight) / 2 - Mathf.RoundToInt(minY);
-
-            // Activate cells corresponding to the shape.
+            
             foreach (var pos in shape)
             {
                 int cellX = Mathf.RoundToInt(pos.x) + offsetX;

@@ -1,5 +1,23 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!244 &-3972205399193166964
+AudioMixerEffectController:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  m_EffectID: 8330d0235654e384ebb56630dc1822af
+  m_EffectName: Lowpass
+  m_MixLevel: 499956784e8a61a4c822bc21eb19b261
+  m_Parameters:
+  - m_ParameterName: Cutoff freq
+    m_GUID: f15d0c70168ca4f4ebf622ff039e678b
+  - m_ParameterName: Resonance
+    m_GUID: 2e92b264943a30d4c8805ff0995a50e8
+  m_SendTarget: {fileID: 0}
+  m_EnableWetMix: 0
+  m_Bypass: 0
 --- !u!241 &24100000
 AudioMixerController:
   m_ObjectHideFlags: 0
@@ -18,6 +36,8 @@ AudioMixerController:
   m_ExposedParameters:
   - guid: 0c77bfdadc0d5ee4c98cbc9fdb936211
     name: Volume
+  - guid: f15d0c70168ca4f4ebf622ff039e678b
+    name: Cutoff
   m_AudioMixerGroupViews:
   - guids:
     - 87309b8e5be6ede47b404131ada3ea0e
@@ -39,6 +59,7 @@ AudioMixerGroupController:
   m_Send: 00000000000000000000000000000000
   m_Effects:
   - {fileID: 24400004}
+  - {fileID: -3972205399193166964}
   m_UserColorIndex: 0
   m_Mute: 0
   m_Solo: 0
@@ -66,5 +87,7 @@ AudioMixerSnapshotController:
   m_Name: Snapshot
   m_AudioMixer: {fileID: 24100000}
   m_SnapshotID: fda869a75c4183845ad1e32646e077bb
-  m_FloatValues: {}
+  m_FloatValues:
+    f15d0c70168ca4f4ebf622ff039e678b: 22000
+    2e92b264943a30d4c8805ff0995a50e8: 1
   m_TransitionOverrides: {}

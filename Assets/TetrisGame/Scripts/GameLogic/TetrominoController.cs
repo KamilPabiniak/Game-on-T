@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using TetrisGame.Scripts.UI;
 using UnityEngine;
 
-namespace TetrisGame.Scripts.GameLogic
+namespace TetrisGame.GameLogic
 {
     [RequireComponent(typeof(Rigidbody))]
     public class TetrominoController : MonoBehaviour
@@ -13,23 +13,20 @@ namespace TetrisGame.Scripts.GameLogic
         public float horizontalSpeed = 5f;
         public float fallSpeed = 3f;
         public bool isPlaced;
-
         public PlayerColor owner = PlayerColor.Blue;
 
         private Rigidbody _rigidbody;
-        private Vector3 _movement;
         private TetrominoInputHandler _inputHandler;
+        private Vector3 _movement;
 
         private void Awake()
         {
             _rigidbody = GetComponent<Rigidbody>();
+            _inputHandler = GetComponent<TetrominoInputHandler>();
             _rigidbody.isKinematic = false;
             _rigidbody.useGravity = false;
-            _rigidbody.constraints = RigidbodyConstraints.FreezeRotationX |
-                                     RigidbodyConstraints.FreezeRotationY |
-                                     RigidbodyConstraints.FreezeRotationZ;
-            
-            _inputHandler = GetComponent<TetrominoInputHandler>();
+            _rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+            _rigidbody.constraints = RigidbodyConstraints.FreezeRotation;
         }
         
         public void Initialize()
@@ -39,10 +36,9 @@ namespace TetrisGame.Scripts.GameLogic
 
         private void Update()
         {
-            _movement = _inputHandler != null 
-                ? _inputHandler.GetMovement(owner, horizontalSpeed, fallSpeed) 
-                : Vector3.zero;
+            if (isPlaced) return;
             
+            HandleMovement();
             HandleRotation();
         }
         
@@ -55,10 +51,10 @@ namespace TetrisGame.Scripts.GameLogic
         {
             if (isPlaced)
                 return;
-            
+    
             foreach (Transform block in transform)
             {
-                if (Mathf.RoundToInt(block.position.y) <= 0)
+                if (Mathf.FloorToInt(block.position.y) <= 0)
                 {
                     SnapBlocksToGrid();
                     PlaceTetromino();
@@ -68,9 +64,10 @@ namespace TetrisGame.Scripts.GameLogic
             
             if (!CanMove(Vector3.down * (fallSpeed * Time.fixedDeltaTime)))
             {
-                while (CanMove(Vector3.down))
+                const float step = 0.1f;
+                while (CanMove(Vector3.down * step))
                 {
-                    _rigidbody.MovePosition(_rigidbody.position + Vector3.down);
+                    _rigidbody.MovePosition(_rigidbody.position + Vector3.down * step);
                 }
                 SnapBlocksToGrid();
                 PlaceTetromino();
@@ -79,16 +76,36 @@ namespace TetrisGame.Scripts.GameLogic
 
             _rigidbody.MovePosition(_rigidbody.position + _movement * Time.fixedDeltaTime);
         }
+
         
         public void SnapBlocksToGrid()
         {
+            Vector3 boardOrigin = BoardManager.Instance.transform.position;
+            int boardWidth = BoardManager.Instance.boardWidth;
+            int boardHeight = BoardManager.Instance.boardHeight;
+
+            List<Vector3> newPositions = new List<Vector3>();
+
             foreach (Transform block in transform)
             {
-                Vector3 position = block.position;
-                int gridX = Mathf.RoundToInt(position.x);
-                int gridY = Mathf.RoundToInt(position.y);
-                block.position = new Vector3(gridX, gridY, position.z);
+                var position = block.position;
+                float relX = position.x - boardOrigin.x;
+                float relY = position.y - boardOrigin.y;
+                int cellX = Mathf.Clamp(Mathf.RoundToInt(relX), 0, boardWidth - 1);
+                int cellY = Mathf.Clamp(Mathf.RoundToInt(relY), 0, boardHeight - 1);
+                newPositions.Add(boardOrigin + new Vector3(cellX , cellY, position.z));
             }
+
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                transform.GetChild(i).position = newPositions[i];
+            }
+        }
+
+        private void HandleMovement()
+        {
+            _movement = _inputHandler != null ? _inputHandler.GetMovement(owner, horizontalSpeed, 
+                fallSpeed * BoardManager.Instance.GlobalFallSpeed) : Vector3.zero;
         }
         
         private void HandleRotation()
@@ -111,7 +128,7 @@ namespace TetrisGame.Scripts.GameLogic
             {
                 Vector3 newWorldPos = transform.position + newLocalPositions[i];
                 int gridX = Mathf.RoundToInt(newWorldPos.x);
-                int gridY = Mathf.RoundToInt(newWorldPos.y);
+                int gridY = Mathf.FloorToInt(newWorldPos.y);
 
                 if (gridX < 0 || gridX >= BoardManager.Instance.boardWidth ||
                     gridY < 0 || gridY >= BoardManager.Instance.boardHeight)
@@ -166,7 +183,14 @@ namespace TetrisGame.Scripts.GameLogic
             {
                 Renderer component = child.GetComponent<Renderer>();
                 if (component != null)
+                {
                     component.material.color = color;
+                }
+                BlockDataSender sender = child.GetComponent<BlockDataSender>();
+                if (sender != null)
+                {
+                    sender.UpdateBlockColor(color);
+                }
             }
         }
         

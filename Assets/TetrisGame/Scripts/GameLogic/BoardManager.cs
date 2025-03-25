@@ -1,8 +1,9 @@
 using System.Collections.Generic;
+using Common.Scripts;
 using TetrisGame.Scripts.UI;
 using UnityEngine;
 
-namespace TetrisGame.Scripts.GameLogic
+namespace TetrisGame.GameLogic
 {
     public class BoardManager : MonoBehaviour
     {
@@ -31,13 +32,13 @@ namespace TetrisGame.Scripts.GameLogic
         public void PlaceTetromino(GameObject tetromino)
         {
             Vector3 boardOrigin = transform.position;
-            
+    
             List<Transform> blocks = new List<Transform>();
             foreach (Transform block in tetromino.transform)
             {
                 blocks.Add(block);
             }
-            
+    
             foreach (Transform block in blocks)
             {
                 Vector3 localPos = block.position - boardOrigin;
@@ -47,21 +48,20 @@ namespace TetrisGame.Scripts.GameLogic
                 
                 block.position = boardOrigin + new Vector3(gridX + 0.5f, gridY + 0.5f, 0);
                 block.parent = null;
+                block.gameObject.layer = LayerMask.NameToLayer("Snaped");
+        
                 _grid[gridPos] = block.gameObject;
             }
-
-            // Clear here
             ClearFullRows();
             GlobalFallSpeed += 0.1f;
-            
             Destroy(tetromino);
         }
+
         
         private void ClearFullRows()
         {
             List<int> fullRows = new List<int>();
-
-            // Check each row of the board.
+            
             for (int y = 0; y < boardHeight; y++)
             {
                 int count = 0;
@@ -77,8 +77,7 @@ namespace TetrisGame.Scripts.GameLogic
                     fullRows.Add(y);
                 }
             }
-
-            // Clear each full row and update score.
+            
             foreach (int y in fullRows)
             {
                 ClearRow(y);
@@ -100,11 +99,34 @@ namespace TetrisGame.Scripts.GameLogic
                 Vector2Int pos = new Vector2Int(x, y);
                 if (_grid.ContainsKey(pos))
                 {
+                    int blockId = _grid[pos].GetInstanceID();
+                    VisualEvetns.RaiseBlockRemoved(blockId);
                     Destroy(_grid[pos]);
                     _grid.Remove(pos);
                 }
             }
         }
+        
+        public bool CanSpawnTetromino(Vector3 spawnPosition, Vector3[] shape)
+        {
+            Vector3 boardOrigin = transform.position;
+            for (int i = 0; i < shape.Length; i++)
+            {
+                Vector3 worldPos = spawnPosition + shape[i];
+                Vector3 localPos = worldPos - boardOrigin;
+                
+                int gridX = Mathf.RoundToInt(localPos.x);
+                int gridY = Mathf.FloorToInt(localPos.y);
+        
+                if(gridX < 0 || gridX >= boardWidth || gridY < 0 || gridY >= boardHeight)
+                    return false;
+            
+                if(IsPositionOccupied(new Vector2Int(gridX, gridY)))
+                    return false;
+            }
+            return true;
+        }
+
         
         private void ShiftRowsDown(int startY)
         {
@@ -124,6 +146,7 @@ namespace TetrisGame.Scripts.GameLogic
                 }
             }
         }
+
         
         public bool IsPositionOccupied(Vector2Int gridPos)
         {

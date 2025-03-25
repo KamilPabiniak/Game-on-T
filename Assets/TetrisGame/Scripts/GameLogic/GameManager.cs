@@ -1,7 +1,10 @@
+using Common.Scripts;
+using TetrisGame.Scripts.GameLogic;
 using TetrisGame.Scripts.UI;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
-namespace TetrisGame.Scripts.GameLogic
+namespace TetrisGame.GameLogic
 {
     public class GameManager : MonoBehaviour
     {
@@ -38,12 +41,22 @@ namespace TetrisGame.Scripts.GameLogic
         private void SpawnTetrominos()
         {
             int indexBlue = Random.Range(0, spawnPointsBlue.Length);
-            SpawnTetrominoForPlayer(spawnPointsBlue[indexBlue].position, PlayerColor.Blue, _nextTetrominoShapeBlue);
+            int indexRed = Random.Range(0, spawnPointsRed.Length);
+            Vector3 blueSpawnPos = spawnPointsBlue[indexBlue].position;
+            Vector3 redSpawnPos = spawnPointsRed[indexRed].position;
+
+            if (!BoardManager.Instance.CanSpawnTetromino(blueSpawnPos, _nextTetrominoShapeBlue) ||
+                !BoardManager.Instance.CanSpawnTetromino(redSpawnPos, _nextTetrominoShapeRed))
+            {
+                GameOver();
+                return;
+            }
+
+            SpawnTetrominoForPlayer(blueSpawnPos, PlayerColor.Blue, _nextTetrominoShapeBlue);
             _nextTetrominoShapeBlue = tetrominoSpawner.GetRandomTetrominoShape();
             TetrisUIManager.Instance.UpdateBlueNextTetrominoPreview(_nextTetrominoShapeBlue);
             
-            int indexRed = Random.Range(0, spawnPointsRed.Length);
-            SpawnTetrominoForPlayer(spawnPointsRed[indexRed].position, PlayerColor.Red, _nextTetrominoShapeRed);
+            SpawnTetrominoForPlayer(redSpawnPos, PlayerColor.Red, _nextTetrominoShapeRed);
             _nextTetrominoShapeRed = tetrominoSpawner.GetRandomTetrominoShape();
             TetrisUIManager.Instance.UpdateRedNextTetrominoPreview(_nextTetrominoShapeRed);
             
@@ -87,6 +100,12 @@ namespace TetrisGame.Scripts.GameLogic
             {
                 SpawnTetrominos();
             }
+        }
+        
+        private void GameOver()
+        {
+            Debug.Log("Game Over!");
+            GameEvent.OnGameOver?.Invoke();
         }
     }
 }

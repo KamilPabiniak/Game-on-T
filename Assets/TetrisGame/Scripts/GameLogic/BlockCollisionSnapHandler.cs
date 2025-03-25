@@ -1,10 +1,9 @@
-using TetrisGame.Scripts.UI;
 using UnityEngine;
 
-namespace TetrisGame.Scripts.GameLogic
+namespace TetrisGame.GameLogic
 {
     [RequireComponent(typeof(Collider))]
-    public class BlockCollisionHandler : MonoBehaviour
+    public class BlockCollisionSnapHandler : MonoBehaviour
     {
         private TetrominoController _parentController;
         private bool _hasSwapped;
@@ -17,10 +16,10 @@ namespace TetrisGame.Scripts.GameLogic
 
         private void OnCollisionEnter(Collision collision)
         {
-            BlockCollisionHandler otherHandler = collision.gameObject.GetComponent<BlockCollisionHandler>();
-            if (otherHandler != null)
+            BlockCollisionSnapHandler otherSnapHandler = collision.gameObject.GetComponent<BlockCollisionSnapHandler>();
+            if (otherSnapHandler != null)
             {
-                TetrominoController otherController = otherHandler._parentController;
+                TetrominoController otherController = otherSnapHandler._parentController;
                 if (otherController != null && otherController.isPlaced)
                 {
                     if (!_parentController.isPlaced)
@@ -33,9 +32,9 @@ namespace TetrisGame.Scripts.GameLogic
             }
             
             if (_hasSwapped) return;
-            if (otherHandler != null)
+            if (otherSnapHandler != null)
             {
-                TetrominoController otherController = otherHandler._parentController;
+                TetrominoController otherController = otherSnapHandler._parentController;
                 if (otherController != null && !otherController.isPlaced && otherController.owner != _parentController.owner)
                 {
                     _parentController.SwapControlWith(otherController);
@@ -46,8 +45,8 @@ namespace TetrisGame.Scripts.GameLogic
 
         private void OnCollisionExit(Collision collision)
         {
-            BlockCollisionHandler otherHandler = collision.gameObject.GetComponent<BlockCollisionHandler>();
-            if (otherHandler != null)
+            BlockCollisionSnapHandler otherSnapHandler = collision.gameObject.GetComponent<BlockCollisionSnapHandler>();
+            if (otherSnapHandler != null)
             {
                 _hasSwapped = false;
             }

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace TetrisGame.Scripts.GameLogic
+namespace TetrisGame.GameLogic
 {
     public class TetrominoContainer : MonoBehaviour
     {
@@ -25,10 +25,9 @@ namespace TetrisGame.Scripts.GameLogic
             
             if (block.GetComponent<Collider>() == null)
             {
-                BoxCollider collider = block.AddComponent<BoxCollider>();
-                collider.size = Vector3.one * 0.95f;
+                BoxCollider boxCollider = block.AddComponent<BoxCollider>();
+                boxCollider.size = Vector3.one * 0.95f;
             }
-            
         }
         
         private void ClearChildren()
