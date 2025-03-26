@@ -63,7 +63,7 @@ namespace TetrisGame.GameLogic
                 }
             }
             
-            Vector3 fallStep = Vector3.down * (fallSpeed * BoardManager.Instance.GlobalFallSpeed * Time.fixedDeltaTime);
+            Vector3 fallStep = Vector3.down * (fallSpeed * GameManager.Instance.GlobalFallSpeed * Time.fixedDeltaTime);
     
             if (!CanMove(fallStep))
             {
@@ -117,7 +117,7 @@ namespace TetrisGame.GameLogic
         private void HandleMovement()
         {
             _movement = _inputHandler != null ? _inputHandler.GetMovement(owner, horizontalSpeed, 
-                fallSpeed * BoardManager.Instance.GlobalFallSpeed) : Vector3.zero;
+                fallSpeed * GameManager.Instance.GlobalFallSpeed) : Vector3.zero;
         }
         
         private void HandleRotation()

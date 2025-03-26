@@ -12,6 +12,8 @@ namespace TetrisGame.GameLogic
         public TetrominoSpawner tetrominoSpawner;
         public Transform[] spawnPointsBlue;
         public Transform[] spawnPointsRed;
+        public float GlobalFallSpeed { get; internal set; } = 1f;
+        internal int Score { get; set; }
         
         private Vector3[] _nextTetrominoShapeBlue;
         private Vector3[] _nextTetrominoShapeRed;

@@ -18,9 +18,6 @@ namespace TetrisGame.GameLogic
 
         [Tooltip("Points awarded per cleared row.")]
         public int scorePerLine = 100;
-
-        private int Score { get; set; }
-        public float GlobalFallSpeed { get; private set; } = 1f;
         
         private readonly Dictionary<Vector2Int, GameObject> _grid = new();
 
@@ -54,10 +51,9 @@ namespace TetrisGame.GameLogic
                 _grid[gridPos] = o;
             }
             ClearFullRows();
-            GlobalFallSpeed += 0.1f;
+            GameManager.Instance.GlobalFallSpeed += 0.07f;
             Destroy(tetromino);
         }
-
         
         private void ClearFullRows()
         {
@@ -82,9 +78,8 @@ namespace TetrisGame.GameLogic
             foreach (int y in fullRows)
             {
                 ClearRow(y);
-                Score += scorePerLine;
-                Debug.Log("Row cleared! Current Score: " + Score);
-                TetrisUIManager.Instance.UpdateScore(Score);
+                //Score += scorePerLine;
+                TetrisUIManager.Instance.UpdateScore(GameManager.Instance.Score += scorePerLine);
             }
             
             foreach (int y in fullRows)
