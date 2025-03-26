@@ -19,7 +19,7 @@ namespace TetrisGame.GameLogic
         [Tooltip("Points awarded per cleared row.")]
         public int scorePerLine = 100;
 
-        public int Score { get; private set; }
+        private int Score { get; set; }
         public float GlobalFallSpeed { get; private set; } = 1f;
         
         private readonly Dictionary<Vector2Int, GameObject> _grid = new();
@@ -48,9 +48,10 @@ namespace TetrisGame.GameLogic
                 
                 block.position = boardOrigin + new Vector3(gridX + 0.5f, gridY + 0.5f, 0);
                 block.parent = null;
-                block.gameObject.layer = LayerMask.NameToLayer("Snaped");
+                GameObject o;
+                (o = block.gameObject).layer = LayerMask.NameToLayer("Snaped");
         
-                _grid[gridPos] = block.gameObject;
+                _grid[gridPos] = o;
             }
             ClearFullRows();
             GlobalFallSpeed += 0.1f;
@@ -107,12 +108,12 @@ namespace TetrisGame.GameLogic
             }
         }
         
-        public bool CanSpawnTetromino(Vector3 spawnPosition, Vector3[] shape)
+        public bool CanSpawnTetromino(Vector3 spawnPosition, Vector3[] shapes)
         {
             Vector3 boardOrigin = transform.position;
-            for (int i = 0; i < shape.Length; i++)
+            foreach (var shape in shapes)
             {
-                Vector3 worldPos = spawnPosition + shape[i];
+                Vector3 worldPos = spawnPosition + shape;
                 Vector3 localPos = worldPos - boardOrigin;
                 
                 int gridX = Mathf.RoundToInt(localPos.x);

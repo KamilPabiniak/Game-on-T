@@ -25,7 +25,8 @@ namespace TetrisGame.GameLogic
             _inputHandler = GetComponent<TetrominoInputHandler>();
             _rigidbody.isKinematic = false;
             _rigidbody.useGravity = false;
-            _rigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+            _rigidbody.collisionDetectionMode = CollisionDetectionMode.Continuous;
+            _rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
             _rigidbody.constraints = RigidbodyConstraints.FreezeRotation;
         }
         
@@ -62,20 +63,31 @@ namespace TetrisGame.GameLogic
                 }
             }
             
-            if (!CanMove(Vector3.down * (fallSpeed * Time.fixedDeltaTime)))
+            Vector3 fallStep = Vector3.down * (fallSpeed * BoardManager.Instance.GlobalFallSpeed * Time.fixedDeltaTime);
+    
+            if (!CanMove(fallStep))
             {
-                const float step = 0.1f;
-                while (CanMove(Vector3.down * step))
+                const float smoothStep = 0.05f;
+                Vector3 newPos = _rigidbody.position;
+                int iteration = 0;
+                int maxIterations = 10;
+                while (CanMove(Vector3.down * smoothStep) && iteration < maxIterations)
                 {
-                    _rigidbody.MovePosition(_rigidbody.position + Vector3.down * step);
+                    newPos += Vector3.down * smoothStep;
+                    iteration++;
                 }
+                _rigidbody.MovePosition(newPos);
                 SnapBlocksToGrid();
                 PlaceTetromino();
                 return;
             }
-
-            _rigidbody.MovePosition(_rigidbody.position + _movement * Time.fixedDeltaTime);
+    
+            Vector3 targetPosition = _rigidbody.position + _movement * Time.fixedDeltaTime;
+            float blendFactor = 0.9f;
+            Vector3 smoothPosition = Vector3.Lerp(_rigidbody.position, targetPosition, blendFactor);
+            _rigidbody.MovePosition(smoothPosition);
         }
+
 
         
         public void SnapBlocksToGrid()
@@ -93,7 +105,7 @@ namespace TetrisGame.GameLogic
                 float relY = position.y - boardOrigin.y;
                 int cellX = Mathf.Clamp(Mathf.RoundToInt(relX), 0, boardWidth - 1);
                 int cellY = Mathf.Clamp(Mathf.RoundToInt(relY), 0, boardHeight - 1);
-                newPositions.Add(boardOrigin + new Vector3(cellX , cellY, position.z));
+                newPositions.Add(boardOrigin + new Vector3(cellX, cellY, position.z));
             }
 
             for (int i = 0; i < transform.childCount; i++)

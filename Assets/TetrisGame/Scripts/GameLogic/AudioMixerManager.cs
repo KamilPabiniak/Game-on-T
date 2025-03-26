@@ -16,6 +16,7 @@ namespace TetrisGame.GameLogic
         private void OnDisable()
         {
             GameEvent.OnGameOver -= SetEffect;
+            audioMixer.SetFloat("Cutoff", 22000f);
         }
 
         private void SetEffect()
