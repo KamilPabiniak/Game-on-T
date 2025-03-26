@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -22,6 +23,16 @@ namespace TetrisGame.Scripts.UI
         public Key redFastFallKey = Key.DownArrow;
         public Key redRotateKey = Key.W;
         
+        public Key quitKey = Key.Escape;
+
+        private void Update()
+        {
+            if (Keyboard.current[quitKey].isPressed)
+            {
+                Application.Quit();
+            }
+        }
+
         public Vector3 GetMovement(PlayerColor owner, float horizontalSpeed, float fallSpeed)
         {
             Vector3 movement = Vector3.zero;
