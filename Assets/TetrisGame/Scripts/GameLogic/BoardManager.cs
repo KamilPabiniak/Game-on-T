@@ -29,13 +29,25 @@ namespace TetrisGame.GameLogic
         public void PlaceTetromino(GameObject tetromino)
         {
             Vector3 boardOrigin = transform.position;
-    
             List<Transform> blocks = new List<Transform>();
+
             foreach (Transform block in tetromino.transform)
             {
                 blocks.Add(block);
             }
-    
+            
+            foreach (Transform block in blocks)
+            {
+                Vector3 localPos = block.position - boardOrigin;
+                int gridX = Mathf.RoundToInt(localPos.x);
+                int gridY = Mathf.RoundToInt(localPos.y);
+                Vector2Int gridPos = new Vector2Int(gridX, gridY);
+
+                if (gridX >= 0 && gridX < boardWidth && gridY >= 0 && gridY < boardHeight && !_grid.ContainsKey(gridPos)) continue;
+                Destroy(tetromino);
+                return;
+            }
+            
             foreach (Transform block in blocks)
             {
                 Vector3 localPos = block.position - boardOrigin;
@@ -45,13 +57,13 @@ namespace TetrisGame.GameLogic
                 
                 block.position = boardOrigin + new Vector3(gridX + 0.5f, gridY + 0.5f, 0);
                 block.parent = null;
-                GameObject o;
-                (o = block.gameObject).layer = LayerMask.NameToLayer("Snaped");
+                GameObject o = block.gameObject;
+                o.layer = LayerMask.NameToLayer("Snaped");
         
                 _grid[gridPos] = o;
             }
             ClearFullRows();
-            GameManager.Instance.GlobalFallSpeed += 0.07f;
+            GameManager.Instance.GlobalFallSpeed += 0.06f;
             Destroy(tetromino);
         }
         
@@ -78,7 +90,6 @@ namespace TetrisGame.GameLogic
             foreach (int y in fullRows)
             {
                 ClearRow(y);
-                //Score += scorePerLine;
                 TetrisUIManager.Instance.UpdateScore(GameManager.Instance.Score += scorePerLine);
             }
             
@@ -122,7 +133,6 @@ namespace TetrisGame.GameLogic
             }
             return true;
         }
-
         
         private void ShiftRowsDown(int startY)
         {
@@ -142,7 +152,6 @@ namespace TetrisGame.GameLogic
                 }
             }
         }
-
         
         public bool IsPositionOccupied(Vector2Int gridPos)
         {

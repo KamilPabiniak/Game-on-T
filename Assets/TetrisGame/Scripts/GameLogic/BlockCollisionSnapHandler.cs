@@ -24,13 +24,12 @@ namespace TetrisGame.GameLogic
                 {
                     if (!_parentController.isPlaced)
                     {
-                        _parentController.SnapBlocksToGrid();
                         _parentController.PlaceTetromino();
                     }
                     return;
                 }
             }
-            
+
             if (_hasSwapped) return;
             if (otherSnapHandler != null)
             {

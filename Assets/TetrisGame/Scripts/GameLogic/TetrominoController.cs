@@ -52,12 +52,11 @@ namespace TetrisGame.GameLogic
         {
             if (isPlaced)
                 return;
-    
+
             foreach (Transform block in transform)
             {
                 if (Mathf.FloorToInt(block.position.y) <= 0)
                 {
-                    SnapBlocksToGrid();
                     PlaceTetromino();
                     return;
                 }
@@ -77,7 +76,6 @@ namespace TetrisGame.GameLogic
                     iteration++;
                 }
                 _rigidbody.MovePosition(newPos);
-                SnapBlocksToGrid();
                 PlaceTetromino();
                 return;
             }
@@ -87,33 +85,7 @@ namespace TetrisGame.GameLogic
             Vector3 smoothPosition = Vector3.Lerp(_rigidbody.position, targetPosition, blendFactor);
             _rigidbody.MovePosition(smoothPosition);
         }
-
-
         
-        public void SnapBlocksToGrid()
-        {
-            Vector3 boardOrigin = BoardManager.Instance.transform.position;
-            int boardWidth = BoardManager.Instance.boardWidth;
-            int boardHeight = BoardManager.Instance.boardHeight;
-
-            List<Vector3> newPositions = new List<Vector3>();
-
-            foreach (Transform block in transform)
-            {
-                var position = block.position;
-                float relX = position.x - boardOrigin.x;
-                float relY = position.y - boardOrigin.y;
-                int cellX = Mathf.Clamp(Mathf.RoundToInt(relX), 0, boardWidth - 1);
-                int cellY = Mathf.Clamp(Mathf.RoundToInt(relY), 0, boardHeight - 1);
-                newPositions.Add(boardOrigin + new Vector3(cellX, cellY, position.z));
-            }
-
-            for (int i = 0; i < transform.childCount; i++)
-            {
-                transform.GetChild(i).position = newPositions[i];
-            }
-        }
-
         private void HandleMovement()
         {
             _movement = _inputHandler != null ? _inputHandler.GetMovement(owner, horizontalSpeed, 
@@ -123,7 +95,6 @@ namespace TetrisGame.GameLogic
         private void HandleRotation()
         {
             bool rotatePressed = _inputHandler != null && _inputHandler.IsRotatePressed(owner);
-
             if (!rotatePressed)
                 return;
 
@@ -174,7 +145,6 @@ namespace TetrisGame.GameLogic
                 int newX = Mathf.RoundToInt(newPos.x);
                 int newY = Mathf.FloorToInt(newPos.y);
                 Vector2Int gridPos = new Vector2Int(newX, newY);
-
                 if (gridPos.y < 0 || BoardManager.Instance.IsPositionOccupied(gridPos))
                     return false;
             }
@@ -183,6 +153,9 @@ namespace TetrisGame.GameLogic
 
         public void PlaceTetromino()
         {
+            if (isPlaced)
+                return;
+
             isPlaced = true;
             BoardManager.Instance.PlaceTetromino(gameObject);
             GameManager.Instance.OnTetrominoPlaced(owner);
@@ -195,14 +168,10 @@ namespace TetrisGame.GameLogic
             {
                 Renderer component = child.GetComponent<Renderer>();
                 if (component != null)
-                {
                     component.material.color = color;
-                }
                 BlockDataSender sender = child.GetComponent<BlockDataSender>();
                 if (sender != null)
-                {
                     sender.UpdateBlockColor(color);
-                }
             }
         }
         
@@ -218,10 +187,7 @@ namespace TetrisGame.GameLogic
             if (collision.gameObject.layer == LayerMask.NameToLayer("Snaped"))
             {
                 if (!isPlaced)
-                {
-                    SnapBlocksToGrid();
                     PlaceTetromino();
-                }
                 return;
             }
             
@@ -229,10 +195,8 @@ namespace TetrisGame.GameLogic
             if (otherController != null && otherController != this && otherController.owner != owner)
             {
                 _rigidbody.linearVelocity = Vector3.zero;
-
                 var pair = (this, otherController);
                 var reversePair = (otherController, this);
-
                 if (!SwappedPairs.Contains(pair) && !SwappedPairs.Contains(reversePair))
                 {
                     SwapControlWith(otherController);
